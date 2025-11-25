@@ -55,15 +55,45 @@
                 </div>
             </div>
 
+            <!-- BLOQUE DE CURSOS MATRICULADOS CORREGIDO Y ACTUALIZADO CON ESTADOS -->
             <div class="bg-white rounded-2xl shadow-sm p-6">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">Cursos Matriculados</h3>
-                @if($alumno->cursos && $alumno->cursos->count() > 0)
+                
+                {{-- *** La iteración correcta es sobre la relación 'matriculas' *** --}}
+                @if($alumno->matriculas->isNotEmpty())
                     <ul class="space-y-3">
-                        @foreach($alumno->cursos as $curso)
-                            <li class="flex justify-between items-center p-3 bg-gray-50 rounded-lg">
-                                <span class="font-medium text-gray-700">{{ $curso->nombre }}</span>
-                                <span class="text-sm text-gray-500">{{ $curso->codigo }}</span>
-                            </li>
+                        {{-- Iteramos sobre las MATRÍCULAS, no directamente sobre los CURSOS --}}
+                        @foreach($alumno->matriculas as $matricula)
+                            @if($matricula->curso) {{-- Verificamos que el curso esté disponible --}}
+                                @php
+                                    // Lógica para asignar estilos según el estado de la matrícula
+                                    $estado = strtoupper($matricula->estado);
+                                    $class = 'bg-gray-100 text-gray-800'; // Default
+                                    $displayText = $matricula->estado;
+
+                                    if ($estado === 'APROBADO') {
+                                        $class = 'bg-green-100 text-green-800';
+                                    } elseif ($estado === 'PENDIENTE') {
+                                        $class = 'bg-yellow-100 text-yellow-800';
+                                    } elseif ($estado === 'RECHAZADO') {
+                                        $class = 'bg-red-100 text-red-800';
+                                    }
+                                @endphp
+
+                                <li class="flex justify-between items-center p-4 bg-gray-50 rounded-lg hover:shadow-md transition duration-150 ease-in-out">
+                                    {{-- Información del Curso --}}
+                                    <div>
+                                        <span class="font-semibold text-gray-800 block">{{ $matricula->curso->nombre }}</span>
+                                        <span class="text-xs text-gray-500 mt-1">Código: {{ $matricula->curso->codigo }} | Nivel: {{ $matricula->curso->nivel ?? 'N/A' }}</span>
+                                    </div>
+                                    
+                                    {{-- Estado de la Matrícula --}}
+                                    <div class="text-right">
+                                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full {{ $class }}">{{ $displayText }}</span>
+                                        <p class="text-xs text-gray-400 mt-1">Matrícula: {{ \Carbon\Carbon::parse($matricula->fecha)->format('d/m/Y') ?? 'N/A' }}</p>
+                                    </div>
+                                </li>
+                            @endif
                         @endforeach
                     </ul>
                 @else
@@ -73,6 +103,8 @@
                     </div>
                 @endif
             </div>
+            <!-- FIN BLOQUE CORREGIDO -->
+
         </div>
     </div>
 </div>

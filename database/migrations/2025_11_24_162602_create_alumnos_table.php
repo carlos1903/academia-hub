@@ -6,23 +6,36 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('alumnos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre');
-            $table->string('email')->unique();
             
-            // CORREGIDO: Solo se permiten 'PRIMARIA' y 'SECUNDARIA'
-            $table->enum('nivel', ['PRIMARIA', 'SECUNDARIA']); 
+            // Campos obligatorios
+            $table->string('nombre', 100);
+            $table->string('apellido', 100);
+            $table->string('correo_electronico')->unique();
             
-            // Grados se mantienen igual, pero asegúrate de que sean consistentes
-            $table->enum('grado', ['1RO', '2DO', '3RO', '4TO', '5TO', '6TO']);
+            // ✅ CORREGIDO: ENUM con valores en MAYÚSCULAS para consistencia
+            $table->enum('nivel', ['PRIMARIA', 'SECUNDARIA']);
+            $table->string('grado', 50);
+
+            // Campos opcionales (nullable)
+            $table->date('fecha_nacimiento')->nullable();
+            $table->string('telefono', 20)->nullable();
+            
+            // Timestamps de Laravel
             $table->timestamps();
             $table->softDeletes();
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('alumnos');

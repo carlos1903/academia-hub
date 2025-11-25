@@ -13,7 +13,6 @@ class CursoController extends Controller
      */
     public function index()
     {
-        // Se asegura de recuperar todos los cursos (incluyendo los 'no eliminados')
         $cursos = Curso::with('docente')
                        ->withCount('matriculas as alumnos_count') 
                        ->orderBy('nombre', 'asc')
@@ -29,9 +28,10 @@ class CursoController extends Controller
     {
         $docentes = Docente::orderBy('nombre', 'asc')->get();
         
+        // ✅ CORREGIDO: Niveles en MAYÚSCULAS para coincidir con BD
         $niveles = [
-            'Primaria' => 'Primaria',
-            'Secundaria' => 'Secundaria',
+            'PRIMARIA' => 'Primaria',
+            'SECUNDARIA' => 'Secundaria',
         ];
 
         return view('cursos.create', compact('docentes', 'niveles'));
@@ -42,19 +42,20 @@ class CursoController extends Controller
      */
     public function store(Request $request)
     {
-        // 1. Validar los datos de entrada
+        // ✅ Convertir nivel a mayúsculas antes de validar
+        $request->merge(['nivel' => strtoupper($request->nivel)]);
+        
+        // ✅ CORREGIDO: Validación con niveles en MAYÚSCULAS
         $request->validate([
             'codigo' => 'required|string|max:50|unique:cursos,codigo', 
             'nombre' => 'required|string|max:255',
-            'nivel' => 'required|string|in:Primaria,Secundaria',
+            'nivel' => 'required|string|in:PRIMARIA,SECUNDARIA',
             'docente_id' => 'required|exists:docentes,id',
-            'descripcion' => 'nullable|string', // Se asume que 'descripcion' debe guardarse
+            'descripcion' => 'nullable|string',
         ]);
         
-        // 2. Crear y guardar el curso
         Curso::create($request->all());
 
-        // 3. Redirigir con mensaje de éxito
         return redirect()->route('cursos.index')->with('success', 'Curso creado con éxito.');
     }
 
@@ -63,11 +64,13 @@ class CursoController extends Controller
      */
     public function show(Curso $curso)
     {
-        $curso->load('docente');
+        // ✅ Cargar relaciones necesarias para la vista
+        $curso->load(['docente', 'alumnos']);
 
+        // ✅ CORREGIDO: orderBy('fecha_matricula') en vez de 'fecha'
         $matriculas = $curso->matriculas()
                            ->with('alumno') 
-                           ->orderBy('fecha', 'desc') 
+                           ->orderBy('fecha_matricula', 'desc') 
                            ->get();
 
         return view('cursos.show', compact('curso', 'matriculas'));
@@ -80,9 +83,10 @@ class CursoController extends Controller
     {
         $docentes = Docente::orderBy('nombre', 'asc')->get();
         
+        // ✅ CORREGIDO: Niveles en MAYÚSCULAS
         $niveles = [
-            'Primaria' => 'Primaria',
-            'Secundaria' => 'Secundaria',
+            'PRIMARIA' => 'Primaria',
+            'SECUNDARIA' => 'Secundaria',
         ];
         
         return view('cursos.edit', compact('curso', 'docentes', 'niveles'));
@@ -93,11 +97,14 @@ class CursoController extends Controller
      */
     public function update(Request $request, Curso $curso)
     {
-        // 1. Validar los datos de entrada
+        // ✅ Convertir nivel a mayúsculas antes de validar
+        $request->merge(['nivel' => strtoupper($request->nivel)]);
+        
+        // ✅ CORREGIDO: Validación con niveles en MAYÚSCULAS
         $request->validate([
             'codigo' => 'required|string|max:50|unique:cursos,codigo,' . $curso->id, 
             'nombre' => 'required|string|max:255',
-            'nivel' => 'required|string|in:Primaria,Secundaria',
+            'nivel' => 'required|string|in:PRIMARIA,SECUNDARIA',
             'docente_id' => 'required|exists:docentes,id',
             'descripcion' => 'nullable|string',
         ]);
@@ -112,7 +119,6 @@ class CursoController extends Controller
      */
     public function destroy(Curso $curso)
     {
-        // Usa el método delete() de Eloquent, que activa SoftDeletes.
         $curso->delete();
 
         return redirect()->route('cursos.index')->with('success', 'Curso eliminado con éxito.');

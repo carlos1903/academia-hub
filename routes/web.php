@@ -28,6 +28,7 @@ Route::middleware(['auth'])->group(function () {
     Route::resource('cursos', CursoController::class);
     Route::resource('matriculas', MatriculaController::class);
     
+    
     // RUTA DE REPORTES:
     // Solo se necesita la vista principal (index) para Reportes.
     Route::get('reportes', [ReporteController::class, 'index'])->name('reportes.index');

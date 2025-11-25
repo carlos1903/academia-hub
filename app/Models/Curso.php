@@ -4,44 +4,43 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Curso extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory;
 
-    /**
-     * Atributos asignables masivamente.
-     */
     protected $fillable = [
-        'codigo',
         'nombre',
-        'nivel', // Este campo será un ENUM en la DB
+        'codigo',
+        'nivel',
         'docente_id',
-        'alumnos_count' // Campo de conteo, manejado por la DB/lógica
     ];
 
     /**
-     * Relación uno a uno (inversa): Un curso pertenece a un docente.
+     * Un Curso pertenece a un Docente.
      */
     public function docente()
     {
         return $this->belongsTo(Docente::class);
     }
-
+    
     /**
-     * Relación uno a muchos: Un curso tiene muchas matrículas.
+     * Un Curso tiene muchas Matriculas.
+     * ✅ CORREGIDO: Ordenar por 'fecha_matricula' en vez de 'fecha'
      */
     public function matriculas()
     {
-        return $this->hasMany(Matricula::class);
+        return $this->hasMany(Matricula::class)->orderBy('fecha_matricula', 'desc');
     }
 
     /**
-     * Relación muchos a muchos: Un curso tiene muchos alumnos a través de la tabla 'matriculas'.
+     * Un Curso tiene muchos Alumnos a través de Matriculas (many-to-many).
+     * Esta relación permite acceder directamente a los alumnos del curso.
      */
     public function alumnos()
     {
-        return $this->belongsToMany(Alumno::class, 'matriculas');
+        return $this->belongsToMany(Alumno::class, 'matriculas', 'curso_id', 'alumno_id')
+                    ->withPivot('fecha_matricula', 'estado')
+                    ->withTimestamps();
     }
 }

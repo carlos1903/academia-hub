@@ -8,31 +8,38 @@ use Illuminate\Database\Eloquent\Model;
 class Matricula extends Model
 {
     use HasFactory;
-    
-    // Campos que se pueden asignar masivamente
+
     protected $fillable = [
-        'alumno_id', 
+        'alumno_id',
         'curso_id',
-        'fecha', // Asumo que este es el campo de fecha que estás usando
-        'nivel',
+        'fecha_matricula',
         'estado',
+        // Asegúrate de incluir todos los demás campos relevantes
     ];
 
     /**
-     * Definir los tipos de datos para la conversión (Casting).
-     * Esto convierte la cadena 'fecha' en un objeto Carbon/DateTime automáticamente.
+     * Definimos los 'casts' para asegurarnos de que el campo de fecha se maneje como un objeto Carbon.
+     * Esto soluciona el error "Call to a member function format() on string" en todas las vistas.
      */
     protected $casts = [
-        'fecha' => 'datetime', // ¡ESTA ES LA CORRECCIÓN CRÍTICA!
+        'fecha_matricula' => 'datetime', // Usamos 'datetime' para mayor compatibilidad, aunque 'date' también funciona.
     ];
+    
+    //---------------------------------------------------------
+    // RELACIONES
+    //---------------------------------------------------------
 
-    // Relación con Alumno
+    /**
+     * Una Matrícula pertenece a un Alumno.
+     */
     public function alumno()
     {
         return $this->belongsTo(Alumno::class);
     }
 
-    // Relación con Curso
+    /**
+     * Una Matrícula pertenece a un Curso.
+     */
     public function curso()
     {
         return $this->belongsTo(Curso::class);

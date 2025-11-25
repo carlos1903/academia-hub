@@ -11,22 +11,40 @@ class Alumno extends Model
     use HasFactory, SoftDeletes;
 
     /**
-     * Los atributos que son asignables masivamente.
+     * ✅ CRÍTICO: Asegúrate de incluir TODOS los campos que se pueden asignar masivamente
      */
     protected $fillable = [
         'nombre',
-        'correo_electronico', // Debe coincidir exactamente con el nombre de la columna en la migración
-        'nivel',    // Ej: Primaria, Secundaria
-        'grado',    // Ej: 1, 2, 3...
+        'apellido',
+        'correo_electronico', // ✅ ESTE CAMPO ES CRÍTICO
         'telefono',
-        // Si tienes más campos en la migración de alumnos, añádelos aquí.
+        'fecha_nacimiento',
+        'nivel',
+        'grado',
     ];
 
     /**
-     * Relación uno a muchos: un alumno puede tener varias matrículas.
+     * Cast de tipos para manejar fechas correctamente
+     */
+    protected $casts = [
+        'fecha_nacimiento' => 'date',
+    ];
+
+    /**
+     * Un Alumno puede tener muchas Matrículas (relación con Curso a través de Matricula)
      */
     public function matriculas()
     {
         return $this->hasMany(Matricula::class);
+    }
+
+    /**
+     * Un Alumno puede estar en muchos Cursos a través de Matriculas (many-to-many)
+     */
+    public function cursos()
+    {
+        return $this->belongsToMany(Curso::class, 'matriculas', 'alumno_id', 'curso_id')
+                    ->withPivot('fecha_matricula', 'estado')
+                    ->withTimestamps();
     }
 }
