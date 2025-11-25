@@ -1,109 +1,120 @@
-{{-- resources/views/dashboard.blade.php --}}
-
 @extends('layouts.app')
 
-@section('title', 'Dashboard | Reporte General')
+@section('title', 'Dashboard - Academia Hub')
+
+{{-- Incluimos Font Awesome (Chart.js ya no es necesario) --}}
+@section('head')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" xintegrity="sha512-SnH5WK+bZxgPHs44uWIX+LLMD/CDQplR1Ff82/3j2Bf6yW/U9G/R1R7vB9Dq9/wD6wzF7l9R2fQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+@endsection
 
 @section('content')
 <div class="p-6 md:p-8">
-    <h1 class="text-3xl font-bold text-gray-800 mb-8">
-        <i class="fas fa-chart-line text-teal-500 mr-2"></i> RESUMEN ACADÉMICO
-    </h1>
+    
+    {{-- TÍTULO DE LA PÁGINA --}}
+    <h1 class="text-3xl font-bold text-gray-900 mb-6">Dashboard</h1>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-        <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-blue-500">
-            <p class="text-sm font-semibold text-gray-500 uppercase">Total Alumnos</p>
-            <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $totalAlumnos }}</p>
-            <i class="fas fa-user-graduate absolute top-5 right-5 text-gray-200 text-4xl opacity-50"></i>
+    {{-- CABECERA Y BOTÓN A REPORTES --}}
+    <div class="flex justify-end items-center mb-8">
+        {{-- Botón de acceso rápido a Reportes --}}
+        <a href="{{ route('reportes.index') }}" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-lg font-semibold transition flex items-center gap-2 shadow-md">
+            <i class="fas fa-chart-line"></i>
+            VER REPORTES COMPLETOS
+        </a>
+    </div>
+
+    {{-- 1. TARJETAS DE MÉTRICAS (KPIs) --}}
+    {{-- Se redujo el grid a 3 columnas ya que se eliminó el KPI de Ingresos --}}
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        
+        {{-- TARJETA 1: ALUMNOS TOTALES (Datos Dinámicos) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-blue-500 transform hover:scale-[1.02] transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    {{-- VARIABLE DINÁMICA: totalAlumnos --}}
+                    <p class="text-4xl font-bold text-gray-900">{{ $totalAlumnos ?? 0 }}</p> 
+                    <p class="text-sm font-medium text-blue-500 uppercase">Total de Alumnos</p>
+                </div>
+                <i class="fas fa-user-graduate text-blue-500 text-3xl opacity-75"></i>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-yellow-500">
-            <p class="text-sm font-semibold text-gray-500 uppercase">Total Docentes</p>
-            <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $totalDocentes }}</p>
-            <i class="fas fa-chalkboard-teacher absolute top-5 right-5 text-gray-200 text-4xl opacity-50"></i>
+        {{-- TARJETA 2: DOCENTES ACTIVOS (Datos Dinámicos) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-teal-500 transform hover:scale-[1.02] transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    {{-- VARIABLE DINÁMICA: totalDocentes --}}
+                    <p class="text-4xl font-bold text-gray-900">{{ $totalDocentes ?? 0 }}</p>
+                    <p class="text-sm font-medium text-teal-500 uppercase">Docentes Activos</p>
+                </div>
+                <i class="fas fa-chalkboard-teacher text-teal-500 text-3xl opacity-75"></i>
+            </div>
         </div>
 
-        <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-purple-500">
-            <p class="text-sm font-semibold text-gray-500 uppercase">Cursos Ofertados</p>
-            <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $totalCursos }}</p>
-            <i class="fas fa-book-open absolute top-5 right-5 text-gray-200 text-4xl opacity-50"></i>
-        </div>
-
-        <div class="bg-white rounded-2xl shadow-sm p-5 border-l-4 border-teal-500">
-            <p class="text-sm font-semibold text-gray-500 uppercase">Matrículas Activas</p>
-            <p class="text-3xl font-extrabold text-gray-900 mt-1">{{ $totalMatriculasActivas }}</p>
-            <i class="fas fa-check-circle absolute top-5 right-5 text-gray-200 text-4xl opacity-50"></i>
+        {{-- TARJETA 3: CURSOS OFERTADOS (Datos Dinámicos) --}}
+        <div class="bg-white p-6 rounded-2xl shadow-xl border-l-4 border-yellow-500 transform hover:scale-[1.02] transition duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    {{-- VARIABLE DINÁMICA: totalCursos --}}
+                    <p class="text-4xl font-bold text-gray-900">{{ $totalCursos ?? 0 }}</p>
+                    <p class="text-sm font-medium text-yellow-500 uppercase">Cursos Vigentes</p>
+                </div>
+                <i class="fas fa-book-open text-yellow-500 text-3xl opacity-75"></i>
+            </div>
         </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
-                <i class="fas fa-star mr-1 text-yellow-500"></i> TOP 5 Cursos con más Alumnos
-            </h2>
-            <ul class="divide-y divide-gray-100">
-                @forelse($cursosPopulares as $curso)
-                <li class="py-3 flex justify-between items-center hover:bg-gray-50 px-2 rounded-lg">
-                    <div class="flex items-center">
-                        <span class="font-bold text-teal-600 mr-3">{{ $loop->iteration }}.</span>
-                        <div>
-                            <p class="font-medium text-gray-800">{{ $curso->nombre }}</p>
-                            <p class="text-xs text-gray-500">{{ $curso->docente->nombre ?? 'Docente no asignado' }}</p>
-                        </div>
-                    </div>
-                    <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-2.5 py-0.5 rounded-full">
-                        {{ $curso->alumnos_count }} Alumnos
-                    </span>
-                </li>
+    {{-- 2. BLOQUE DE ACTIVIDAD (ÚLTIMOS REGISTROS) --}}
+    {{-- Ahora ocupa todo el ancho de la pantalla (lg:col-span-3) --}}
+    <div class="grid grid-cols-1 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-xl lg:col-span-3">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Actividad Reciente</h2>
+            <ul class="space-y-4">
+                {{-- Loop para actividad reciente (VARIABLE DINÁMICA: actividadReciente) --}}
+                @forelse ($actividadReciente as $item)
+                    {{-- Lógica para determinar el tipo de elemento y sus propiedades --}}
+                    @php
+                        // Se asume que \App\Models\Alumno y \App\Models\Docente (o similares) están definidos.
+                        $isAlumno = $item instanceof \App\Models\Alumno;
+                        $iconClass = $isAlumno ? 'fas fa-plus-circle text-blue-500' : 'fas fa-chalkboard-teacher text-teal-500';
+                        $borderColor = $isAlumno ? 'border-blue-400' : 'border-teal-400';
+                        $title = $isAlumno ? 'Nuevo Alumno' : 'Nuevo Docente';
+                        // Usamos ?? 'Desconocido' como fallback si el campo es nulo
+                        $subtitle = $isAlumno ? ($item->nivel ?? 'Nivel Desconocido') : ($item->especialidad ?? 'Especialidad Desconocida');
+                        
+                        // Generación de links (asegúrate que las rutas existan)
+                        $link = '#'; // Fallback
+                        try {
+                            if ($isAlumno) {
+                                $link = route('alumnos.show', $item->id);
+                            } else {
+                                $link = route('docentes.show', $item->id);
+                            }
+                        } catch (\Exception $e) {
+                            // Ruta no definida, se queda el fallback '#'
+                        }
+                    @endphp
+                    
+                    <a href="{{ $link }}" class="block">
+                        <li class="flex items-center p-3 bg-gray-50 rounded-lg border-l-4 {{ $borderColor }} hover:bg-gray-100 transition duration-150">
+                            <i class="{{ $iconClass }} mr-3 flex-shrink-0"></i>
+                            <div>
+                                {{-- Usamos el campo 'nombre' o 'name' según el modelo --}}
+                                <p class="text-sm font-medium text-gray-800">{{ $title }}: {{ $item->nombre ?? $item->name ?? 'Usuario sin nombre' }}</p>
+                                {{-- 'diffForHumans()' necesita que el campo created_at sea un objeto Carbon --}}
+                                <p class="text-xs text-gray-500">{{ $subtitle }}, registrado hace {{ $item->created_at->diffForHumans() }}.</p>
+                            </div>
+                        </li>
+                    </a>
                 @empty
-                <li class="py-4 text-center text-gray-500 italic">No hay suficientes datos de cursos.</li>
+                    <li class="p-3 text-center text-gray-500">
+                        No hay actividad reciente registrada en la base de datos.
+                    </li>
                 @endforelse
             </ul>
         </div>
-
-        <div class="bg-white rounded-2xl shadow-sm p-6">
-            <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
-                <i class="fas fa-layer-group mr-1 text-purple-500"></i> Alumnos por Nivel
-            </h2>
-            <ul class="space-y-3">
-                @foreach($distribucionNiveles as $nivel)
-                <li class="flex justify-between items-center">
-                    <span class="font-medium text-gray-600">{{ $nivel->grado }}</span>
-                    <span class="font-bold text-gray-900">{{ $nivel->total }}</span>
-                </li>
-                <div class="w-full bg-gray-200 rounded-full h-2.5">
-                    @php
-                        $porcentaje = ($nivel->total / $totalAlumnos) * 100;
-                    @endphp
-                    <div class="bg-teal-400 h-2.5 rounded-full" style="width: {{ $porcentaje }}%"></div>
-                </div>
-                @endforeach
-            </ul>
-        </div>
-    </div>
-
-    <div class="mt-8 bg-white rounded-2xl shadow-sm p-6">
-        <h2 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">
-            <i class="fas fa-history mr-1 text-gray-500"></i> Últimos Alumnos Registrados
-        </h2>
-        <ul class="divide-y divide-gray-100">
-            @forelse($ultimosAlumnos as $alumno)
-            <li class="py-3 flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <i class="fas fa-id-card text-blue-400"></i>
-                    <div>
-                        <p class="font-medium text-gray-800">{{ $alumno->nombre }}</p>
-                        <p class="text-sm text-gray-500">{{ $alumno->email }}</p>
-                    </div>
-                </div>
-                <span class="bg-red-100 text-red-800 text-xs font-semibold px-2.5 py-0.5 rounded">
-                    {{ $alumno->grado }}
-                </span>
-            </li>
-            @empty
-            <li class="py-4 text-center text-gray-500 italic">No hay alumnos registrados recientemente.</li>
-            @endforelse
-        </ul>
     </div>
 </div>
+
+{{-- No hay bloques @php ni @push('scripts') ya que no se usan gráficos. --}}
+
 @endsection

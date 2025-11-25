@@ -12,59 +12,105 @@
     </div>
 
     <div class="bg-white rounded-2xl shadow-sm p-6 md:p-8">
+        {{-- Usamos el método PUT para la actualización en Laravel --}}
         <form action="{{ route('matriculas.update', $matricula) }}" method="POST" class="space-y-6">
             @csrf
             @method('PUT')
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- SELECCIONAR ALUMNO (Generalmente no se edita en la vida real, pero lo mantenemos) -->
                 <div class="col-span-2">
-                    <label for="alumno_id" class="block text-sm font-bold text-gray-700 mb-2">ALUMNO</label>
+                    <label for="alumno_id" class="block text-sm font-bold text-gray-700 mb-2">SELECCIONAR ALUMNO</label>
                     <select name="alumno_id" id="alumno_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                        <option value="">Buscar Alumno...</option>
+                        @php $selectedAlumno = old('alumno_id', $matricula->alumno_id); @endphp
                         @foreach($alumnos as $alumno)
-                            <option value="{{ $alumno->id }}" {{ old('alumno_id', $matricula->alumno_id) == $alumno->id ? 'selected' : '' }}>
-                                {{ $alumno->nombre }}
+                            <option value="{{ $alumno->id }}" {{ $selectedAlumno == $alumno->id ? 'selected' : '' }}>
+                                {{ $alumno->nombre }} - {{ $alumno->grado }}
                             </option>
                         @endforeach
                     </select>
+                    @error('alumno_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                <!-- SELECCIONAR CURSO -->
                 <div class="col-span-2 md:col-span-1">
-                    <label for="curso_id" class="block text-sm font-bold text-gray-700 mb-2">CURSO</label>
+                    <label for="curso_id" class="block text-sm font-bold text-gray-700 mb-2">SELECCIONAR CURSO</label>
                     <select name="curso_id" id="curso_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                        <option value="">Buscar Curso...</option>
+                        @php $selectedCurso = old('curso_id', $matricula->curso_id); @endphp
                         @foreach($cursos as $curso)
-                            <option value="{{ $curso->id }}" {{ old('curso_id', $matricula->curso_id) == $curso->id ? 'selected' : '' }}>
-                                {{ $curso->nombre }}
+                            <option value="{{ $curso->id }}" {{ $selectedCurso == $curso->id ? 'selected' : '' }}>
+                                {{ $curso->nombre }} ({{ $curso->nivel }})
                             </option>
                         @endforeach
                     </select>
+                    @error('curso_id')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                <!-- NIVEL (Corregido para solo mostrar Primaria y Secundaria) -->
                 <div class="col-span-2 md:col-span-1">
                     <label for="nivel" class="block text-sm font-bold text-gray-700 mb-2">NIVEL</label>
                     <select name="nivel" id="nivel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
-                        <option value="Primaria" {{ old('nivel', $matricula->nivel) == 'Primaria' ? 'selected' : '' }}>Primaria</option>
-                        <option value="Secundaria" {{ old('nivel', $matricula->nivel) == 'Secundaria' ? 'selected' : '' }}>Secundaria</option>
-                        <option value="Bachillerato" {{ old('nivel', $matricula->nivel) == 'Bachillerato' ? 'selected' : '' }}>Bachillerato</option>
+                        <option value="">Seleccionar Nivel</option>
+                        @php 
+                            // Prioriza el valor de old('nivel') o usa el valor actual de la base de datos
+                            $selectedNivel = old('nivel', $matricula->nivel); 
+                        @endphp
+                        
+                        {{-- Itera solo sobre el array de $niveles (PRIMARIA, SECUNDARIA) --}}
+                        @foreach($niveles as $nivel)
+                            <option value="{{ $nivel }}" {{ $selectedNivel == $nivel ? 'selected' : '' }}>
+                                {{ ucfirst(strtolower($nivel)) }}
+                            </option>
+                        @endforeach
                     </select>
+                    @error('nivel')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                <!-- FECHA DE MATRÍCULA -->
                 <div>
-                    <label for="fecha" class="block text-sm font-bold text-gray-700 mb-2">FECHA</label>
-                    <input type="date" name="fecha" id="fecha" value="{{ old('fecha', optional($matricula->fecha)->format('Y-m-d')) }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                    <label for="fecha" class="block text-sm font-bold text-gray-700 mb-2">FECHA DE MATRÍCULA</label>
+                    <input type="date" name="fecha" id="fecha" 
+                           value="{{ old('fecha', $matricula->fecha) }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                    @error('fecha')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
 
+                <!-- ESTADO -->
                 <div>
                     <label for="estado" class="block text-sm font-bold text-gray-700 mb-2">ESTADO</label>
                     <select name="estado" id="estado" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
-                        <option value="Activo" {{ old('estado', $matricula->estado) == 'Activo' ? 'selected' : '' }}>Activo</option>
-                        <option value="Inactivo" {{ old('estado', $matricula->estado) == 'Inactivo' ? 'selected' : '' }}>Inactivo</option>
+                        @php 
+                            // Prioriza el valor de old('estado') o usa el valor actual de la base de datos
+                            $selectedEstado = old('estado', $matricula->estado); 
+                        @endphp
+                        
+                        {{-- Itera solo sobre el array de $estados (ACTIVO, INACTIVO) --}}
+                        @foreach($estados as $estado)
+                             <option value="{{ $estado }}" {{ $selectedEstado == $estado ? 'selected' : '' }}>
+                                {{ ucfirst(strtolower($estado)) }}
+                            </option>
+                        @endforeach
                     </select>
+                    @error('estado')
+                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                    @enderror
                 </div>
             </div>
 
+            <!-- Botones de Acción -->
             <div class="flex items-center gap-4 pt-4 border-t border-gray-100 mt-6">
-                <button type="submit" class="bg-yellow-400 hover:bg-yellow-500 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center gap-2">
-                    <i class="fas fa-sync-alt"></i> ACTUALIZAR MATRÍCULA
+                <button type="submit" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center gap-2">
+                    <i class="fas fa-check-circle"></i> GUARDAR CAMBIOS
                 </button>
                 <a href="{{ route('matriculas.index') }}" class="text-gray-600 hover:text-gray-800 font-medium px-4 py-3 transition">
                     CANCELAR

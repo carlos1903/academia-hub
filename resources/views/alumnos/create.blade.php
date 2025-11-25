@@ -16,6 +16,7 @@
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
                 <div class="col-span-2 md:col-span-1">
                     <label for="nombre" class="block text-sm font-bold text-gray-700 mb-2">NOMBRE COMPLETO</label>
                     <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required placeholder="Ej: Juan Pérez">
@@ -35,10 +36,12 @@
                 <div>
                     <label for="nivel" class="block text-sm font-bold text-gray-700 mb-2">NIVEL ACADÉMICO</label>
                     <select name="nivel" id="nivel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
-                        <option value="">Seleccionar Nivel</option>
+                        {{-- CRÍTICO: Aseguramos que el valor vacío esté deshabilitado para forzar la selección --}}
+                        <option value="" disabled {{ old('nivel') == '' ? 'selected' : '' }}>Seleccionar Nivel</option>
+                        
+                        {{-- VALORES CORREGIDOS: Ahora coinciden exactamente con la validación de Laravel (P/S mayúscula) --}}
                         <option value="Primaria" {{ old('nivel') == 'Primaria' ? 'selected' : '' }}>Primaria</option>
                         <option value="Secundaria" {{ old('nivel') == 'Secundaria' ? 'selected' : '' }}>Secundaria</option>
-                        <option value="Bachillerato" {{ old('nivel') == 'Bachillerato' ? 'selected' : '' }}>Bachillerato</option>
                     </select>
                     @error('nivel')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -47,7 +50,7 @@
 
                 <div>
                     <label for="grado" class="block text-sm font-bold text-gray-700 mb-2">GRADO / AÑO</label>
-                    <input type="text" name="grado" id="grado" value="{{ old('grado') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required placeholder="Ej: 1er Grado, 5to Año">
+                    <input type="text" name="grado" id="grado" value="{{ old('grado') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required placeholder="Ej: 5TO (asegura el formato)">
                     @error('grado')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror

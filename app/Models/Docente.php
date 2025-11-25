@@ -10,12 +10,20 @@ class Docente extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * Los atributos que son asignables masivamente.
+     * Se añaden 'especialidad' y 'telefono'.
+     */
     protected $fillable = [
         'nombre',
         'email',
-        'especialidad'
+        'especialidad',
+        'telefono', // Añadido para consistencia con el Controller/Migration
     ];
 
+    /**
+     * Relación uno a muchos: un docente tiene muchos cursos.
+     */
     public function cursos()
     {
         return $this->hasMany(Curso::class);

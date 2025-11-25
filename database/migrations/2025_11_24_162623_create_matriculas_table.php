@@ -10,15 +10,24 @@ return new class extends Migration
     {
         Schema::create('matriculas', function (Blueprint $table) {
             $table->id();
+            
+            // LLAVES FORÁNEAS
             $table->foreignId('alumno_id')->constrained('alumnos')->onDelete('cascade');
-            $table->foreignId('curso_id')->constrained('cursos')->onDelete('cascade');
-            $table->enum('nivel', ['SECUNDARIA', 'INSTITUTO', 'UNIVERSIDAD']);
+            $table->foreignId('curso_id')->constrained('cursos')->onDelete('restrict'); 
+            
+            // CAMPOS ENUM
+            // Nivel (solo PRIMARIA y SECUNDARIA, en mayúsculas, consistente con Cursos/Docentes)
+            $table->enum('nivel', ['PRIMARIA', 'SECUNDARIA']); 
+            // Estado de la Matrícula (ACTIVO o INACTIVO, en mayúsculas)
+            $table->enum('estado', ['ACTIVO', 'INACTIVO'])->default('ACTIVO');
+            
             $table->date('fecha');
-            $table->enum('estado', ['RECHAZADO', 'PENDIENTE', 'APROBADA'])->default('PENDIENTE');
+
+            // Restricción única: un alumno solo puede estar matriculado una vez en un curso.
+            $table->unique(['alumno_id', 'curso_id']); 
+            
             $table->timestamps();
             $table->softDeletes();
-            
-            $table->unique(['alumno_id', 'curso_id']);
         });
     }
 
@@ -26,4 +35,4 @@ return new class extends Migration
     {
         Schema::dropIfExists('matriculas');
     }
-};
+};  

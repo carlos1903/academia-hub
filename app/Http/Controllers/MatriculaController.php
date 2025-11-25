@@ -6,49 +6,110 @@ use App\Models\Matricula;
 use App\Models\Alumno;
 use App\Models\Curso;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Facades\DB; // Añadido para transacciones y mass insertion
 
 class MatriculaController extends Controller
 {
+    // Definiciones de ENUM (consistentes con la migración y la validación)
+    private $niveles = ['PRIMARIA', 'SECUNDARIA'];
+    private $estados = ['ACTIVO', 'INACTIVO'];
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        // Usamos 'with' para traer los datos del alumno y curso de una vez (optimización)
-        $matriculas = Matricula::with(['alumno', 'curso'])->latest()->get();
+        // Se añade la paginación para una mejor gestión de la lista
+        $matriculas = Matricula::with(['alumno', 'curso'])
+                                ->latest()
+                                ->paginate(15);
+        
         return view('matriculas.index', compact('matriculas'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Muestra el formulario para crear una nueva matrícula usando el flujo masivo.
+     * Renombrado de 'create' a 'createMasiva'
      */
-    public function create()
+    public function createMasiva()
     {
-        // Necesitamos enviar la lista de alumnos y cursos para los <select>
-        $alumnos = Alumno::all();
-        $cursos = Curso::all();
-        return view('matriculas.create', compact('alumnos', 'cursos'));
+        // Cargamos todos los alumnos y cursos para la selección masiva
+        $alumnos = Alumno::orderBy('nombre')->get();
+        $cursos = Curso::with('docente')->orderBy('nombre')->get(); // Cargar docente para la etiqueta
+        
+        // Las variables $niveles y $estados ya no son necesarias en la vista de Matrícula Masiva, 
+        // ya que la matrícula hereda el nivel del curso/alumno.
+        
+        return view('matriculas.create_masiva', compact('alumnos', 'cursos'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Almacena múltiples matrículas para un solo curso.
+     * Renombrado de 'store' a 'storeMasiva'
      */
-    public function store(Request $request)
+    public function storeMasiva(Request $request)
     {
-        // Validamos los datos
+        // 1. Validar el curso y la lista de alumnos
         $request->validate([
-            'alumno_id' => 'required|exists:alumnos,id',
             'curso_id' => 'required|exists:cursos,id',
-            'nivel' => 'required|string',
-            'fecha' => 'required|date',
-            'estado' => 'required|in:Activo,Inactivo',
+            'alumnos_ids' => 'required|array|min:1', // Debe seleccionar al menos un alumno
+            'alumnos_ids.*' => 'exists:alumnos,id',
         ]);
 
-        // Creamos la matrícula
-        Matricula::create($request->all());
+        $curso = Curso::findOrFail($request->input('curso_id'));
+        $alumnosIds = $request->input('alumnos_ids');
+        $matriculasACrear = [];
+        $alumnosYaMatriculados = 0;
+        $fechaActual = now();
+        $estadoMatricula = 'ACTIVO'; // Asumimos que las nuevas matrículas están activas
+        $nivelMatricula = $curso->nivel; // Tomamos el nivel del curso
 
-        return redirect()->route('matriculas.index')
-            ->with('success', 'Matrícula registrada exitosamente.');
+        DB::beginTransaction();
+        try {
+            // 2. Verificar duplicados y preparar datos para inserción masiva
+            foreach ($alumnosIds as $alumnoId) {
+                // Verificar si la matrícula ya existe para evitar errores de clave única
+                $existe = Matricula::where('curso_id', $curso->id)
+                                    ->where('alumno_id', $alumnoId)
+                                    ->exists();
+
+                if (!$existe) {
+                    $matriculasACrear[] = [
+                        'curso_id' => $curso->id,
+                        'alumno_id' => $alumnoId,
+                        'fecha' => $fechaActual, // Usamos 'fecha' según tu base de datos
+                        'nivel' => strtoupper($nivelMatricula), // Asegurar mayúsculas
+                        'estado' => $estadoMatricula, // Asignar estado activo por defecto
+                        'created_at' => $fechaActual,
+                        'updated_at' => $fechaActual,
+                    ];
+                } else {
+                    $alumnosYaMatriculados++;
+                }
+            }
+
+            // 3. Insertar las matrículas válidas
+            if (!empty($matriculasACrear)) {
+                Matricula::insert($matriculasACrear);
+            }
+            
+            DB::commit();
+
+            $totalCreadas = count($matriculasACrear);
+            $mensaje = "Matrículas creadas exitosamente: $totalCreadas para el curso '{$curso->nombre}'.";
+
+            if ($alumnosYaMatriculados > 0) {
+                $mensaje .= " ($alumnosYaMatriculados alumnos ya estaban matriculados y fueron omitidos.)";
+            }
+            
+            return redirect()->route('matriculas.index')->with('success', $mensaje);
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            // Descomenta para ver el error exacto: dd($e); 
+            return redirect()->back()->withInput()->with('error', 'Ocurrió un error al intentar matricular masivamente. Por favor, revise la conexión y los datos.');
+        }
     }
 
     /**
@@ -56,7 +117,7 @@ class MatriculaController extends Controller
      */
     public function show(Matricula $matricula)
     {
-        // Laravel busca automáticamente la matrícula por el ID
+        $matricula->load('alumno', 'curso');
         return view('matriculas.show', compact('matricula'));
     }
 
@@ -65,10 +126,12 @@ class MatriculaController extends Controller
      */
     public function edit(Matricula $matricula)
     {
-        // Para editar, necesitamos la matrícula actual Y las listas para los desplegables
-        $alumnos = Alumno::all();
-        $cursos = Curso::all();
-        return view('matriculas.edit', compact('matricula', 'alumnos', 'cursos'));
+        $alumnos = Alumno::orderBy('nombre')->get();
+        $cursos = Curso::orderBy('nombre')->get();
+        $niveles = $this->niveles;
+        $estados = $this->estados;
+        
+        return view('matriculas.edit', compact('matricula', 'alumnos', 'cursos', 'niveles', 'estados'));
     }
 
     /**
@@ -76,15 +139,33 @@ class MatriculaController extends Controller
      */
     public function update(Request $request, Matricula $matricula)
     {
-        $request->validate([
+        // 1. Transformar Nivel y Estado a MAYÚSCULAS antes de la validación.
+        if ($request->has('nivel')) {
+            $request->merge(['nivel' => strtoupper($request->input('nivel'))]);
+        }
+        if ($request->has('estado')) {
+            $request->merge(['estado' => strtoupper($request->input('estado'))]);
+        }
+        
+        // 2. Validar la solicitud
+        $validatedData = $request->validate([
             'alumno_id' => 'required|exists:alumnos,id',
-            'curso_id' => 'required|exists:cursos,id',
-            'nivel' => 'required|string',
+            'curso_id' => [
+                'required',
+                'exists:cursos,id',
+                // Validación para evitar duplicados, excluyendo la matrícula actual
+                Rule::unique('matriculas')->ignore($matricula->id)->where(function ($query) use ($request) {
+                    // La unicidad debe ser por la combinación de alumno y curso
+                    return $query->where('alumno_id', $request->alumno_id);
+                }),
+            ],
+            // VALIDACIÓN: Ahora verifica que el valor (ya en mayúsculas) sea ACTIVO o INACTIVO.
+            'nivel' => ['required', Rule::in($this->niveles)],
+            'estado' => ['required', Rule::in($this->estados)],
             'fecha' => 'required|date',
-            'estado' => 'required|in:Activo,Inactivo',
         ]);
 
-        $matricula->update($request->all());
+        $matricula->update($validatedData);
 
         return redirect()->route('matriculas.index')
             ->with('success', 'Matrícula actualizada correctamente.');

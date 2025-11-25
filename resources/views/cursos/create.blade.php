@@ -16,44 +16,65 @@
             @csrf
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- CÓDIGO DEL CURSO -->
                 <div>
                     <label for="codigo" class="block text-sm font-bold text-gray-700 mb-2">CÓDIGO DEL CURSO</label>
-                    <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required placeholder="Ej: MAT-101">
+                    <input type="text" name="codigo" id="codigo" value="{{ old('codigo') }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+                           required placeholder="Ej: MAT-101" maxlength="10">
                     @error('codigo')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- NOMBRE DEL CURSO -->
                 <div>
                     <label for="nombre" class="block text-sm font-bold text-gray-700 mb-2">NOMBRE DEL CURSO</label>
-                    <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required placeholder="Ej: Matemáticas Básicas">
+                    <input type="text" name="nombre" id="nombre" value="{{ old('nombre') }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+                           required placeholder="Ej: Matemáticas Básicas">
                     @error('nombre')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- NIVEL (SELECT - para ENUM) -->
                 <div>
                     <label for="nivel" class="block text-sm font-bold text-gray-700 mb-2">NIVEL</label>
-                    <select name="nivel" id="nivel" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                    <select name="nivel" id="nivel" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+                            required>
                         <option value="">Seleccionar Nivel</option>
-                        <option value="Primaria" {{ old('nivel') == 'Primaria' ? 'selected' : '' }}>Primaria</option>
-                        <option value="Secundaria" {{ old('nivel') == 'Secundaria' ? 'selected' : '' }}>Secundaria</option>
-                        <option value="Bachillerato" {{ old('nivel') == 'Bachillerato' ? 'selected' : '' }}>Bachillerato</option>
+                        @php $selectedNivel = old('nivel'); @endphp
+                        
+                        {{-- Iteramos sobre los niveles definidos en el Controller --}}
+                        @foreach($niveles as $nivel)
+                            <option value="{{ $nivel }}" {{ $selectedNivel == $nivel ? 'selected' : '' }}>
+                                {{ ucfirst(strtolower($nivel)) }}
+                            </option>
+                        @endforeach
                     </select>
                     @error('nivel')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                     @enderror
                 </div>
 
+                <!-- DOCENTE RESPONSABLE (LLAVE FORÁNEA) -->
                 <div>
                     <label for="docente_id" class="block text-sm font-bold text-gray-700 mb-2">DOCENTE RESPONSABLE</label>
-                    <select name="docente_id" id="docente_id" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" required>
+                    <select name="docente_id" id="docente_id" 
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent" 
+                            required>
                         <option value="">Seleccionar Docente</option>
-                        @foreach($docentes as $docente)
-                            <option value="{{ $docente->id }}" {{ old('docente_id') == $docente->id ? 'selected' : '' }}>
+                        @php $selectedDocente = old('docente_id'); @endphp
+
+                        @forelse($docentes as $docente)
+                            <option value="{{ $docente->id }}" {{ $selectedDocente == $docente->id ? 'selected' : '' }}>
                                 {{ $docente->nombre }} ({{ $docente->especialidad }})
                             </option>
-                        @endforeach
+                        @empty
+                            <option value="" disabled>No hay docentes registrados</option>
+                        @endforelse
                     </select>
                     @error('docente_id')
                         <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -61,6 +82,7 @@
                 </div>
             </div>
 
+            <!-- Botones de Acción -->
             <div class="flex items-center gap-4 pt-4 border-t border-gray-100 mt-6">
                 <button type="submit" class="bg-teal-500 hover:bg-teal-600 text-white font-semibold py-3 px-6 rounded-lg transition flex items-center gap-2">
                     <i class="fas fa-save"></i> GUARDAR CURSO
@@ -72,4 +94,4 @@
         </form>
     </div>
 </div>
-@endsections
+@endsection

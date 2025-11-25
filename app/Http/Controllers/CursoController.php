@@ -2,97 +2,119 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Curso; // Importar el modelo Curso
-use App\Models\Docente; // Necesario para el desplegable en create y edit
+use App\Models\Curso;
+use App\Models\Docente; 
 use Illuminate\Http\Request;
 
 class CursoController extends Controller
 {
     /**
-     * Display a listing of the resource.
+     * Muestra la vista principal de la lista de cursos.
      */
     public function index()
     {
-        // Optimizamos cargando la relación 'docente' para evitar N+1 queries en la tabla
-        $cursos = Curso::with('docente')->latest()->get();
+        // Se asegura de recuperar todos los cursos (incluyendo los 'no eliminados')
+        $cursos = Curso::with('docente')
+                       ->withCount('matriculas as alumnos_count') 
+                       ->orderBy('nombre', 'asc')
+                       ->paginate(10);
+        
         return view('cursos.index', compact('cursos'));
     }
 
     /**
-     * Show the form for creating a new resource.
+     * Muestra el formulario para crear un nuevo curso.
      */
     public function create()
     {
-        // Necesitamos la lista de docentes para el <select>
-        $docentes = Docente::orderBy('nombre')->get();
-        return view('cursos.create', compact('docentes'));
+        $docentes = Docente::orderBy('nombre', 'asc')->get();
+        
+        $niveles = [
+            'Primaria' => 'Primaria',
+            'Secundaria' => 'Secundaria',
+        ];
+
+        return view('cursos.create', compact('docentes', 'niveles'));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * Almacena un curso recién creado.
      */
     public function store(Request $request)
     {
+        // 1. Validar los datos de entrada
         $request->validate([
-            'codigo' => 'required|string|max:10|unique:cursos,codigo',
+            'codigo' => 'required|string|max:50|unique:cursos,codigo', 
             'nombre' => 'required|string|max:255',
-            'nivel' => 'required|string|max:50',
+            'nivel' => 'required|string|in:Primaria,Secundaria',
             'docente_id' => 'required|exists:docentes,id',
+            'descripcion' => 'nullable|string', // Se asume que 'descripcion' debe guardarse
         ]);
-
+        
+        // 2. Crear y guardar el curso
         Curso::create($request->all());
 
-        return redirect()->route('cursos.index')
-            ->with('success', 'Curso creado exitosamente.');
+        // 3. Redirigir con mensaje de éxito
+        return redirect()->route('cursos.index')->with('success', 'Curso creado con éxito.');
     }
 
     /**
-     * Display the specified resource.
+     * Muestra la información detallada de un curso y su lista de alumnos (Matrículas).
      */
     public function show(Curso $curso)
     {
-        // Usamos with(['docente', 'alumnos']) para cargar la información relacionada
-        $curso->load('docente', 'alumnos');
-        return view('cursos.show', compact('curso'));
+        $curso->load('docente');
+
+        $matriculas = $curso->matriculas()
+                           ->with('alumno') 
+                           ->orderBy('fecha', 'desc') 
+                           ->get();
+
+        return view('cursos.show', compact('curso', 'matriculas'));
     }
 
     /**
-     * Show the form for editing the specified resource.
+     * Muestra el formulario para editar el curso especificado.
      */
     public function edit(Curso $curso)
     {
-        // Necesitamos la lista de docentes para el <select> en el formulario de edición
-        $docentes = Docente::orderBy('nombre')->get();
-        return view('cursos.edit', compact('curso', 'docentes'));
+        $docentes = Docente::orderBy('nombre', 'asc')->get();
+        
+        $niveles = [
+            'Primaria' => 'Primaria',
+            'Secundaria' => 'Secundaria',
+        ];
+        
+        return view('cursos.edit', compact('curso', 'docentes', 'niveles'));
     }
 
     /**
-     * Update the specified resource in storage.
+     * Actualiza el curso especificado.
      */
     public function update(Request $request, Curso $curso)
     {
+        // 1. Validar los datos de entrada
         $request->validate([
-            // Excluimos el código del curso actual de la regla unique
-            'codigo' => 'required|string|max:10|unique:cursos,codigo,' . $curso->id,
+            'codigo' => 'required|string|max:50|unique:cursos,codigo,' . $curso->id, 
             'nombre' => 'required|string|max:255',
-            'nivel' => 'required|string|max:50',
+            'nivel' => 'required|string|in:Primaria,Secundaria',
             'docente_id' => 'required|exists:docentes,id',
+            'descripcion' => 'nullable|string',
         ]);
 
         $curso->update($request->all());
 
-        return redirect()->route('cursos.index')
-            ->with('success', 'Curso actualizado correctamente.');
+        return redirect()->route('cursos.index')->with('success', 'Curso actualizado con éxito.');
     }
 
     /**
-     * Remove the specified resource from storage.
+     * Elimina el curso especificado (Borrado suave/Soft Delete).
      */
     public function destroy(Curso $curso)
     {
+        // Usa el método delete() de Eloquent, que activa SoftDeletes.
         $curso->delete();
 
-        return redirect()->route('cursos.index')
-            ->with('success', 'Curso eliminado correctamente.');
+        return redirect()->route('cursos.index')->with('success', 'Curso eliminado con éxito.');
     }
 }

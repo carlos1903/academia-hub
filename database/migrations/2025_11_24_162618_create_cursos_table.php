@@ -10,11 +10,17 @@ return new class extends Migration
     {
         Schema::create('cursos', function (Blueprint $table) {
             $table->id();
-            $table->string('codigo')->unique();
+            $table->string('codigo', 10)->unique();
             $table->string('nombre');
-            $table->enum('nivel', ['SECUNDARIA', 'INSTITUTO', 'UNIVERSIDAD']);
-            $table->foreignId('docente_id')->constrained('docentes')->onDelete('cascade');
-            $table->integer('alumnos_count')->default(0);
+            // CORREGIDO: Usamos solo PRIMARIA y SECUNDARIA para consistencia con Docentes
+            $table->enum('nivel', ['PRIMARIA', 'SECUNDARIA']); 
+            
+            // LLAVE FORÁNEA a la tabla de Docentes. Usar constrained() es la forma moderna.
+            $table->foreignId('docente_id')->constrained('docentes')->onDelete('restrict'); 
+            
+            // Campo para almacenar el conteo de alumnos (opcional pero útil)
+            $table->integer('alumnos_count')->default(0); 
+            
             $table->timestamps();
             $table->softDeletes();
         });

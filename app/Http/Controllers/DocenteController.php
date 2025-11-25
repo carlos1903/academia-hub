@@ -2,24 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Docente; // Necesario para gestionar los docentes
+use App\Models\Docente;
 use Illuminate\Http\Request;
 
 class DocenteController extends Controller
 {
     /**
-     * Display a listing of the resource.
      * Muestra la lista de todos los docentes.
      */
     public function index()
     {
-        // Optimizamos cargando la relación 'cursos' (cursos que imparte)
-        $docentes = Docente::with('cursos')->latest()->get();
+        // Recupera todos los docentes, ordenados alfabéticamente por nombre y con paginación
+        $docentes = Docente::orderBy('nombre', 'asc')->paginate(10);
+        
+        // Retorna la vista index de docentes, pasando la colección
         return view('docentes.index', compact('docentes'));
     }
 
     /**
-     * Show the form for creating a new resource.
      * Muestra el formulario para crear un nuevo docente.
      */
     public function create()
@@ -28,38 +28,36 @@ class DocenteController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     * Almacena el nuevo docente en la base de datos.
+     * Almacena un docente recién creado en la base de datos.
      */
     public function store(Request $request)
     {
+        // 1. Validar los datos de entrada
         $request->validate([
             'nombre' => 'required|string|max:255',
-            'email' => 'required|email|unique:docentes,email',
-            'especialidad' => 'required|string|max:100',
+            'email' => 'required|email|unique:docentes,email|max:255',
             'telefono' => 'nullable|string|max:20',
+            'especialidad' => 'required|string|max:100',
         ]);
 
+        // 2. Crear el nuevo docente
         Docente::create($request->all());
 
+        // 3. Redirigir con mensaje de éxito
         return redirect()->route('docentes.index')
-            ->with('success', 'Docente registrado exitosamente.');
+                         ->with('success', 'Docente creado con éxito.');
     }
 
     /**
-     * Display the specified resource.
-     * Muestra los detalles de un docente específico, incluyendo sus cursos.
+     * Muestra la información detallada del docente especificado.
      */
     public function show(Docente $docente)
     {
-        // Carga la relación de cursos que imparte para la vista de detalle
-        $docente->load('cursos');
         return view('docentes.show', compact('docente'));
     }
 
     /**
-     * Show the form for editing the specified resource.
-     * Muestra el formulario para editar un docente existente.
+     * Muestra el formulario para editar el docente especificado.
      */
     public function edit(Docente $docente)
     {
@@ -67,36 +65,35 @@ class DocenteController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
-     * Actualiza el docente en la base de datos.
+     * Actualiza el docente especificado en la base de datos.
      */
     public function update(Request $request, Docente $docente)
     {
+        // 1. Validar los datos de entrada
         $request->validate([
             'nombre' => 'required|string|max:255',
-            // Excluimos el email del docente actual de la regla unique
-            'email' => 'required|email|unique:docentes,email,' . $docente->id,
-            'especialidad' => 'required|string|max:100',
+            // El email debe ser único, excluyendo el email actual del docente
+            'email' => 'required|email|max:255|unique:docentes,email,' . $docente->id,
             'telefono' => 'nullable|string|max:20',
+            'especialidad' => 'required|string|max:100',
         ]);
 
+        // 2. Actualizar el docente
         $docente->update($request->all());
 
+        // 3. Redirigir con mensaje de éxito
         return redirect()->route('docentes.index')
-            ->with('success', 'Docente actualizado correctamente.');
+                         ->with('success', 'Docente actualizado con éxito.');
     }
 
     /**
-     * Remove the specified resource from storage.
-     * Elimina un docente de la base de datos.
+     * Elimina el docente especificado.
      */
     public function destroy(Docente $docente)
     {
-        // Nota: Asegúrate de manejar la restricción de llave foránea si el docente tiene cursos asignados.
-        // Podrías necesitar desasignar los cursos antes de eliminar al docente.
         $docente->delete();
 
         return redirect()->route('docentes.index')
-            ->with('success', 'Docente eliminado correctamente.');
+                         ->with('success', 'Docente eliminado con éxito.');
     }
 }

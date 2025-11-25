@@ -12,7 +12,10 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('email')->unique();
-            $table->enum('especialidad', ['SECUNDARIA', 'INSTITUTO', 'UNIVERSIDAD']);
+            // Corregido el ENUM para usar solo 'PRIMARIA' y 'SECUNDARIA'
+            $table->enum('especialidad', ['PRIMARIA', 'SECUNDARIA']); 
+            // Añadido el campo telefono que se valida en el Controller
+            $table->string('telefono', 20)->nullable(); 
             $table->timestamps();
             $table->softDeletes();
         });

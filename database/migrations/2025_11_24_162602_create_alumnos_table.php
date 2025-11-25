@@ -12,7 +12,11 @@ return new class extends Migration
             $table->id();
             $table->string('nombre');
             $table->string('email')->unique();
-            $table->enum('nivel', ['SECUNDARIA', 'INSTITUTO', 'UNIVERSIDAD']);
+            
+            // CORREGIDO: Solo se permiten 'PRIMARIA' y 'SECUNDARIA'
+            $table->enum('nivel', ['PRIMARIA', 'SECUNDARIA']); 
+            
+            // Grados se mantienen igual, pero asegúrate de que sean consistentes
             $table->enum('grado', ['1RO', '2DO', '3RO', '4TO', '5TO', '6TO']);
             $table->timestamps();
             $table->softDeletes();
