@@ -31,7 +31,9 @@ Route::middleware(['auth'])->group(function () {
     
     // RUTA DE REPORTES:
     // Solo se necesita la vista principal (index) para Reportes.
-    Route::get('reportes', [ReporteController::class, 'index'])->name('reportes.index');
+Route::get('/reportes', [App\Http\Controllers\ReporteController::class, 'index'])
+    ->name('reportes.index');
+
 });
 
 // Incluye las rutas de autenticación (login, register, logout, etc.)

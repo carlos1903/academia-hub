@@ -30,7 +30,9 @@ class DashboardController extends Controller
         // 2. DATOS PARA GRÁFICOS
         
         // A. Alumnos por Nivel
-        $alumnosPorNivel = Alumno::select('nivel')
+        // CORRECCIÓN: Se añade whereNotNull('nivel') para asegurar que solo se cuenten alumnos con nivel definido.
+        $alumnosPorNivel = Alumno::whereNotNull('nivel')
+                                ->select('nivel')
                                 ->selectRaw('count(*) as total')
                                 ->groupBy('nivel')
                                 ->pluck('total', 'nivel')
@@ -81,3 +83,6 @@ class DashboardController extends Controller
         ]);
     }
 }
+
+
+
